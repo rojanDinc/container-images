@@ -6,6 +6,8 @@ WORKDIR /src
 
 RUN git clone https://github.com/sipeed/picoclaw .
 
+RUN git checkout "v0.2.3"
+
 RUN go mod download
 
 RUN make build
