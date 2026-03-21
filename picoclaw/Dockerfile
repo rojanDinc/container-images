@@ -23,5 +23,8 @@ RUN groupadd -g 1000 picoclaw && \
 
 USER picoclaw
 
+# Run onboard to create initial directories and config
+RUN /usr/local/bin/picoclaw onboard
+
 ENTRYPOINT ["picoclaw"]
 CMD ["gateway"]
