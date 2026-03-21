@@ -1,0 +1,70 @@
+name: Promote Container
+
+on:
+  workflow_dispatch:
+    inputs:
+      container:
+        description: 'Container to promote (e.g., picoclaw)'
+        required: true
+        type: string
+      tag:
+        description: 'Tag to apply (e.g., v1.0.0, stable, prod)'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Validate container exists
+        run: |
+          if [ ! -f "${{ inputs.container }}/Dockerfile" ]; then
+            echo "Error: Container '${{ inputs.container }}' does not exist"
+            exit 1
+          fi
+          echo "Promoting container: ${{ inputs.container }}"
+          echo "Tag: ${{ inputs.tag }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ inputs.container }}
+          tags: |
+            type=raw,value=${{ inputs.tag }}
+            type=sha,prefix=,format=short
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ inputs.container }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ inputs.container }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.container }}
+
+      - name: Output image URL
+        run: |
+          echo "Image pushed: ${{ env.REGISTRY }}/${{ github.repository }}/${{ inputs.container }}:${{ inputs.tag }}"
