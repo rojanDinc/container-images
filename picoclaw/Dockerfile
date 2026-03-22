@@ -14,7 +14,7 @@ RUN make build
 
 FROM debian:trixie-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git openssh-client
 
 COPY --from=builder /src/build/picoclaw /usr/local/bin/picoclaw
 
