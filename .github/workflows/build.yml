@@ -15,6 +15,7 @@ jobs:
     outputs:
       picoclaw: ${{ steps.filter.outputs.picoclaw }}
       paperclipai: ${{ steps.filter.outputs.paperclipai }}
+      multica-opencode-runtime: ${{ steps.filter.outputs.multica-opencode-runtime }}
       # Add new containers here
     steps:
       - name: Checkout
@@ -118,4 +119,46 @@ jobs:
         with:
           name: paperclipai-image
           path: /tmp/paperclipai.tar
+          retention-days: 30
+
+  build-multica-opencode-runtime:
+    needs: changes
+    if: ${{ needs.changes.outputs.multica-opencode-runtime == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/multica-opencode-runtime
+          tags: |
+            type=sha,prefix=,format=short
+            type=ref,event=pr
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./multica-opencode-runtime
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=multica-opencode-runtime
+          cache-to: type=gha,mode=max,scope=multica-opencode-runtime
+          outputs: type=docker,dest=/tmp/multica-opencode-runtime.tar
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: multica-opencode-runtime-image
+          path: /tmp/multica-opencode-runtime.tar
           retention-days: 30
