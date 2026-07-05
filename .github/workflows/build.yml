@@ -32,6 +32,9 @@ jobs:
             paperclipai:
               - 'paperclipai/**'
               - '.github/workflows/build.yml'
+            multica-opencode-runtime:
+              - 'multica-opencode-runtime/**'
+              - '.github/workflows/build.yml'
             # Add new containers here:
             # othercontainer:
             #   - 'othercontainer/**'
