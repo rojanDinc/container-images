@@ -22,4 +22,6 @@ else
   exit 1
 fi
 
+npm i -g opencode-ai
+
 ./multica daemon start --foreground
